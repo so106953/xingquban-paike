@@ -17,3 +17,4 @@ download-catalog.cjs
 catalog.test.cjs
 .site-package
 interest-class-site*.tar.gz
+vercel-dist

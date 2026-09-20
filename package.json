@@ -1,0 +1,7 @@
+{
+  "name": "xingquban-paike",
+  "private": true,
+  "scripts": {
+    "build": "node build-vercel.cjs"
+  }
+}

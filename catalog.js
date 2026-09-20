@@ -21,6 +21,13 @@ const COURSE_TYPES = [
   {key:'writing',label:'书法',words:['书法','写字','硬笔','练字'],source:'Writing hand/Default/3D/writing_hand_3d_default.png'},
   {key:'other',label:'其他兴趣',words:[],source:'Graduation cap/3D/graduation_cap_3d.png'}
 ].map(t=>({...t,image:t.image||`assets/courses/${t.key}.png`}))
+const COURSE_SCENES={
+  basketball:'assets/basketball.png',english:'assets/english.png',
+  badminton:'assets/course-scenes/sports.png',pingpong:'assets/course-scenes/sports.png',football:'assets/course-scenes/sports.png',tennis:'assets/course-scenes/sports.png',swimming:'assets/course-scenes/sports.png',skating:'assets/course-scenes/sports.png',martial:'assets/course-scenes/sports.png',
+  painting:'assets/course-scenes/arts.png',piano:'assets/course-scenes/arts.png',guitar:'assets/course-scenes/arts.png',violin:'assets/course-scenes/arts.png',dance:'assets/course-scenes/arts.png',singing:'assets/course-scenes/arts.png',
+  reading:'assets/course-scenes/language.png',writing:'assets/course-scenes/language.png',
+  robot:'assets/course-scenes/thinking.png',chess:'assets/course-scenes/thinking.png',math:'assets/course-scenes/thinking.png',other:'assets/course-scenes/thinking.png'
+}
 function matchCourse(name){const n=String(name).toLowerCase();return COURSE_TYPES.find(t=>t.words.some(w=>n.includes(w)))||COURSE_TYPES.at(-1)}
-function coursePicture(c){if(c.imageKey==='custom'&&/^data:image\/(png|jpeg|webp);base64,/.test(c.customImage||''))return c.customImage;return (COURSE_TYPES.find(t=>t.key===c.imageKey)||matchCourse(c.name)).image}
+function coursePicture(c){if(c.imageKey==='custom'&&/^data:image\/(png|jpeg|webp);base64,/.test(c.customImage||''))return c.customImage;const type=COURSE_TYPES.find(t=>t.key===c.imageKey)||matchCourse(c.name);return COURSE_SCENES[type.key]||type.image}
 if(typeof module!=='undefined')module.exports={COURSE_TYPES,matchCourse,coursePicture}

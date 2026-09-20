@@ -4,6 +4,9 @@ function render(){
   const data=courses.map(c=>summarize(c)),total=data.length
   coursePage=Math.max(0,Math.min(coursePage,total-1))
   document.querySelector('#summary').textContent=data.reduce((n,c)=>n+c.remaining,0)+'节剩余 · 已上'+data.reduce((n,c)=>n+c.completed,0)+'节'
+  const reminders=data.filter(c=>c.next).sort((a,b)=>a.next.date.localeCompare(b.next.date)).slice(0,3)
+  const nowDate=dateKey(new Date()),tomorrow=dateKey(new Date(Date.now()+86400000))
+  document.querySelector('#lesson-reminders').innerHTML=reminders.length?`<h2>🔔 上课提醒</h2><div class="reminder-list">${reminders.map(c=>{const when=c.next.date===nowDate?'今天':c.next.date===tomorrow?'明天':c.next.date.slice(5).replace('-','月')+'日';return `<div class="reminder-item"><b>${esc(c.name)}</b> · ${when} ${c.startTime}–${c.endTime}${c.next.skipped?' · 已请假':''}</div>`}).join('')}</div>`:'<h2>🔔 上课提醒</h2><p class="reminder-empty">暂时没有待上的课程。</p>'
   document.querySelector('#course-count').textContent=total?`${total} 门兴趣班 · 第 ${coursePage+1}/${total} 页`:'0 门兴趣班'
   const previous=document.querySelector('#archive-list'),next=document.querySelector('#next-page')
   previous.hidden=next.hidden=total<2;previous.disabled=coursePage===0;next.disabled=coursePage===total-1

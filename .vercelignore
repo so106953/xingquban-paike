@@ -1,4 +1,9 @@
 server.cjs
+app.js
+schedule.js
+catalog.js
+course-manager.js
+export-records.js
 app.before-catalog.js
 app.previous.js
 index.previous.html

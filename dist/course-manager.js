@@ -1,16 +1,18 @@
 // Extends the existing course tracker while retaining its storage key and history.
 let draftImage='',coursePage=0
+const coursesPerPage=4
 function render(){
   const data=courses.map(c=>summarize(c)),total=data.length
-  coursePage=Math.max(0,Math.min(coursePage,total-1))
+  const pageTotal=Math.max(1,Math.ceil(total/coursesPerPage))
+  coursePage=Math.max(0,Math.min(coursePage,pageTotal-1))
   document.querySelector('#summary').textContent=data.reduce((n,c)=>n+c.remaining,0)+'节剩余 · 已上'+data.reduce((n,c)=>n+c.completed,0)+'节'
   const reminders=data.filter(c=>c.next).sort((a,b)=>a.next.date.localeCompare(b.next.date)).slice(0,3)
   const nowDate=dateKey(new Date()),tomorrow=dateKey(new Date(Date.now()+86400000))
   document.querySelector('#lesson-reminders').innerHTML=reminders.length?`<h2>🔔 上课提醒</h2><div class="reminder-list">${reminders.map(c=>{const when=c.next.date===nowDate?'今天':c.next.date===tomorrow?'明天':c.next.date.slice(5).replace('-','月')+'日';return `<div class="reminder-item"><b>${esc(c.name)}</b> · ${when} ${c.startTime}–${c.endTime}${c.next.skipped?' · 已请假':''}</div>`}).join('')}</div>`:'<h2>🔔 上课提醒</h2><p class="reminder-empty">暂时没有待上的课程。</p>'
-  document.querySelector('#course-count').textContent=total?`${total} 门兴趣班 · 第 ${coursePage+1}/${total} 页`:'0 门兴趣班'
+  document.querySelector('#course-count').textContent=total?`${total} 门兴趣班 · 第 ${coursePage+1}/${pageTotal} 页`:'0 门兴趣班'
   const previous=document.querySelector('#archive-list'),next=document.querySelector('#next-page')
-  previous.hidden=next.hidden=total<2;previous.disabled=coursePage===0;next.disabled=coursePage===total-1
-  const shown=total?[data[coursePage]]:[]
+  previous.hidden=next.hidden=pageTotal<2;previous.disabled=coursePage===0;next.disabled=coursePage===pageTotal-1
+  const shown=data.slice(coursePage*coursesPerPage,(coursePage+1)*coursesPerPage)
   document.querySelector('#courses').innerHTML=shown.length?shown.map(c=>`<article class="course-row" aria-label="${esc(c.name)}课程"><div class="day-label">星期${c.weekdayLabel}</div><img class="course-art" src="${esc(coursePicture(c))}" alt="${esc(c.name)}配图"><div class="course-info"><h3>${esc(c.name)}</h3><p class="time">${c.startTime} – ${c.endTime}</p><div class="progress-caption">${c.remaining} 节剩余</div><div class="progress" role="progressbar" aria-label="${esc(c.name)}已上课时" aria-valuenow="${c.completed}" aria-valuemin="0" aria-valuemax="${c.total}"><span style="width:${c.percent}%"></span></div><div class="course-meta"><span>已上${c.completed} / 共${c.total}节</span><span>${c.next?'下次 '+c.next.date.slice(5).replace('-','月')+'日'+(c.next.skipped?' · 已请假':''):'本期已完成'}</span></div></div><div class="actions"><button class="settings" data-action="edit" data-id="${esc(c.id)}"><img class="ui-icon" src="assets/gear.svg" alt="">设置</button><button class="primary" data-action="history" data-id="${esc(c.id)}"><img class="ui-icon" src="assets/records.svg" alt="">上课记录</button>${c.next?`<button class="secondary" data-action="skip" data-id="${esc(c.id)}" data-date="${c.next.date}"><img class="ui-icon" src="assets/calendar.svg" alt="">${c.next.skipped?'取消请假':'下次请假'}</button>`:''}</div></article>`).join(''):'<div class="empty-courses"><h3>准备开启新的兴趣之旅</h3><p>点击“添加兴趣班”，记录孩子喜欢的每一件事。</p></div>'
 }
 function edit(id){
@@ -52,7 +54,7 @@ function edit(id){
 function showArchived(){historyId=null;content.innerHTML=head('已收起课程')+courses.filter(c=>c.archived).map(c=>`<div class="record"><div>${esc(c.name)}<small>课时与记录均已保留</small></div><button class="secondary" data-restore="${esc(c.id)}">恢复课程</button></div>`).join('');if(!dialog.open)dialog.showModal();content.querySelectorAll('[data-restore]').forEach(b=>b.onclick=()=>{if(persist(courses.map(c=>c.id===b.dataset.restore?{...c,archived:false}:c))){dialog.close();notify('课程已恢复')}})}
 document.querySelector('#add-course').onclick=()=>edit()
 document.querySelector('#archive-list').onclick=()=>{coursePage=Math.max(0,coursePage-1);render()}
-document.querySelector('#next-page').onclick=()=>{coursePage=Math.min(courses.filter(c=>!c.archived).length-1,coursePage+1);render()}
+document.querySelector('#next-page').onclick=()=>{coursePage=Math.min(Math.ceil(courses.length/coursesPerPage)-1,coursePage+1);render()}
 if(courses.some(c=>c.archived))persist(courses.map(c=>c.archived?{...c,archived:false}:c))
 else render()
 function showArchived(){

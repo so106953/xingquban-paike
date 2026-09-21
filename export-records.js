@@ -30,8 +30,16 @@ function exportRecords(){
   overview['!cols']=[{wch:16},{wch:48}]
   overview.A1.s={fill:{patternType:'solid',fgColor:{rgb:'2D5E8C'}},font:{bold:true,color:{rgb:'FFFFFF',sz:14}},alignment:{horizontal:'center'},border:cellBorder}
   ;['A2','B2','A4','B4','A5','B5'].forEach(ref=>overview[ref].s={border:cellBorder,fill:{patternType:'solid',fgColor:{rgb:'EDF6FC'}}})
+  const summaryHeader=['课程大类','课程分类','课程名称','总课时','已上课时','请假次数','剩余课时','每周上课日','上课时间','自动统计开始日期','下次课程']
+  const summaryRows=courses.map(course=>{const item=summarize(course,generatedAt),leaves=item.records.filter(r=>r.skipped).length;return [courseGroup(course),courseType(course),course.name,item.total,item.completed,leaves,item.remaining,'星期'+item.weekdayLabel,course.startTime+'–'+course.endTime,course.startDate,item.next?item.next.date:'本期已完成']})
+  const summarySheet=XLSX.utils.aoa_to_sheet([summaryHeader,...summaryRows])
+  summarySheet['!cols']=[{wch:12},{wch:14},{wch:16},{wch:10},{wch:12},{wch:10},{wch:12},{wch:13},{wch:16},{wch:18},{wch:16}]
+  summaryHeader.forEach((_,column)=>{const ref=XLSX.utils.encode_cell({r:0,c:column});summarySheet[ref].s=headerStyle})
+  summaryRows.forEach((row,index)=>{const color=courseColors[index%courseColors.length],style={fill:{patternType:'solid',fgColor:{rgb:color}},font:{color:{rgb:'1F3D5C'}},alignment:{vertical:'center'},border:cellBorder};for(let column=0;column<summaryHeader.length;column++){summarySheet[XLSX.utils.encode_cell({r:index+1,c:column})].s=style}})
+  summarySheet['!autofilter']={ref:`A1:K${Math.max(1,summaryRows.length+1)}`}
   const workbook=XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook,overview,'导出说明')
+  XLSX.utils.book_append_sheet(workbook,summarySheet,'课程汇总')
   XLSX.utils.book_append_sheet(workbook,worksheet,'上课记录')
   XLSX.writeFile(workbook,`兴趣课时记录_${dateKey(generatedAt)}.xlsx`,{compression:true})
   notify('标准 Excel 表格已导出')

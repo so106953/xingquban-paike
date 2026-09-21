@@ -13,7 +13,7 @@ function render(){
   const previous=document.querySelector('#archive-list'),next=document.querySelector('#next-page')
   previous.hidden=next.hidden=pageTotal<2;previous.disabled=coursePage===0;next.disabled=coursePage===pageTotal-1
   const shown=data.slice(coursePage*coursesPerPage,(coursePage+1)*coursesPerPage)
-  document.querySelector('#courses').innerHTML=shown.length?shown.map(c=>`<article class="course-row" aria-label="${esc(c.name)}课程"><div class="day-label">星期${c.weekdayLabel}</div><img class="course-art" src="${esc(coursePicture(c))}" alt="${esc(c.name)}配图"><div class="course-info"><h3>${esc(c.name)}</h3><p class="time">${c.startTime} – ${c.endTime}</p><div class="progress-caption">${c.remaining} 节剩余</div><div class="progress" role="progressbar" aria-label="${esc(c.name)}已上课时" aria-valuenow="${c.completed}" aria-valuemin="0" aria-valuemax="${c.total}"><span style="width:${c.percent}%"></span></div><div class="course-meta"><span>已上${c.completed} / 共${c.total}节</span><span>${c.next?'下次 '+c.next.date.slice(5).replace('-','月')+'日'+(c.next.skipped?' · 已请假':''):'本期已完成'}</span></div></div><div class="actions"><button class="settings" data-action="edit" data-id="${esc(c.id)}"><img class="ui-icon" src="assets/gear.svg" alt="">设置</button><button class="primary" data-action="history" data-id="${esc(c.id)}"><img class="ui-icon" src="assets/records.svg" alt="">上课记录</button>${c.next?`<button class="secondary" data-action="skip" data-id="${esc(c.id)}" data-date="${c.next.date}"><img class="ui-icon" src="assets/calendar.svg" alt="">${c.next.skipped?'取消请假':'下次请假'}</button>`:''}</div></article>`).join(''):'<div class="empty-courses"><h3>准备开启新的兴趣之旅</h3><p>点击“添加兴趣班”，记录孩子喜欢的每一件事。</p></div>'
+  document.querySelector('#courses').innerHTML=shown.length?shown.map(c=>`<article class="course-row" aria-label="${esc(c.name)}课程"><div class="day-label">星期${c.weekdayLabel}</div><img class="course-art" src="${esc(coursePicture(c))}" alt="${esc(c.name)}配图"><div class="course-info"><h3>${esc(c.name)}</h3><p class="time">${c.startTime} – ${c.endTime}</p><div class="progress-caption">${c.remaining} 节剩余</div><div class="progress" role="progressbar" aria-label="${esc(c.name)}已上课时" aria-valuenow="${c.completed}" aria-valuemin="0" aria-valuemax="${c.total}"><span style="width:${c.percent}%"></span></div><div class="course-meta"><span>已上${c.completed} / 共${c.total}节</span><span>${c.next?'下次 '+c.next.date.slice(5).replace('-','月')+'日'+(c.next.skipped?' · 已请假':''):'本期已完成'}</span></div></div><div class="actions"><button class="settings" data-action="edit" data-id="${esc(c.id)}"><img class="ui-icon" src="assets/gear.svg" alt="">设置</button><button class="primary" data-action="history" data-id="${esc(c.id)}"><img class="ui-icon" src="assets/records.svg" alt="">上课记录</button><button class="manual-course" data-action="manual" data-id="${esc(c.id)}">补课 / 调课</button>${c.next?`<button class="secondary" data-action="skip" data-id="${esc(c.id)}" data-date="${c.next.date}"><img class="ui-icon" src="assets/calendar.svg" alt="">${c.next.skipped?'取消请假':'下次请假'}</button>`:''}</div></article>`).join(''):'<div class="empty-courses"><h3>准备开启新的兴趣之旅</h3><p>点击“添加兴趣班”，记录孩子喜欢的每一件事。</p></div>'
 }
 function edit(id){
   historyId=null
@@ -68,4 +68,16 @@ function showArchived(){
     document.querySelector('#cancel-remove').onclick=showArchived
     document.querySelector('#confirm-remove').onclick=()=>{if(persist(courses.filter(c=>c.id!==id))){dialog.close();notify('课程已删除')}}
   })
+}
+
+function manualRecord(id){
+  const course=courses.find(c=>c.id===id);if(!course)return
+  content.innerHTML=head(course.name+' · 补课 / 调课')+`<form id="manual-form"><div class="form-grid"><label>记录类型<select name="type"><option value="补课">补课（扣 1 节）</option><option value="调课">调课（扣 1 节）</option><option value="临时停课">临时停课（不扣课）</option></select></label><label>上课日期<input name="date" type="date" value="${dateKey(new Date())}" required></label><label>开始时间<input name="start" type="time" value="${course.startTime}" required></label><label>结束时间<input name="end" type="time" value="${course.endTime}" required></label><label class="wide">备注（可选）<input name="note" maxlength="60" placeholder="例如：周三补课"></label></div><p class="hint">若原定每周课程已取消，请在“上课记录”中将原日期标为请假，避免重复扣课。</p><p class="error" id="error" role="alert"></p><div class="form-actions"><button type="button" class="secondary" data-action="close">取消</button><button class="primary" type="submit">保存记录</button></div></form>`
+  dialog.showModal()
+  document.querySelector('#manual-form').onsubmit=e=>{
+    e.preventDefault();const values=Object.fromEntries(new FormData(e.target)),deduct=values.type!=='临时停课'
+    if(values.end<=values.start){document.querySelector('#error').textContent='结束时间须晚于开始时间。';return}
+    const record={id:crypto.randomUUID(),date:values.date,start:values.start,end:values.end,type:values.type,deduct,note:values.note.trim(),createdAt:new Date().toISOString()}
+    if(persist(courses.map(c=>c.id===id?{...c,manualRecords:[...(c.manualRecords||[]),record]}:c))){dialog.close();notify(values.type+'记录已保存')}
+  }
 }

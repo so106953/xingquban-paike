@@ -1,22 +1,28 @@
-function cell(value){return String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
 function leaveTime(course,date){const entry=course.skips?.[date];if(entry&&typeof entry==='object'&&entry.markedAt)return new Date(entry.markedAt).toLocaleString('zh-CN');return entry?'此前版本未记录':''}
 function courseGroup(course){const key=(COURSE_TYPES.find(t=>t.key===course.imageKey)||matchCourse(course.name)).key;const groups={basketball:'运动类',badminton:'运动类',pingpong:'运动类',football:'运动类',tennis:'运动类',swimming:'运动类',skating:'运动类',english:'语言与阅读',reading:'语言与阅读',writing:'语言与阅读',painting:'艺术类',piano:'艺术类',guitar:'艺术类',violin:'艺术类',dance:'艺术类',singing:'艺术类',martial:'运动类',robot:'思维与科技',chess:'思维与科技',math:'思维与科技'};return groups[key]||'其他兴趣'}
 function courseType(course){return (COURSE_TYPES.find(t=>t.key===course.imageKey)||matchCourse(course.name)).label}
 function exportRecords(){
+  if(!window.XLSX){notify('Excel 导出组件尚未加载，请刷新页面后重试');return}
   const generatedAt=new Date(),rows=[]
   courses.forEach(course=>{
     const summary=summarize(course,generatedAt)
     const counts={total:summary.total,used:summary.completed,remaining:summary.remaining}
-    summary.records.slice().reverse().forEach(record=>rows.push({group:courseGroup(course),category:courseType(course),name:course.name,status:'进行中',...counts,date:record.date,start:course.startTime,end:course.endTime,type:record.skipped?'请假':'已上',leave:record.skipped?leaveTime(course,record.date):'',change:record.skipped?'0':'-1',note:record.skipped?'请假，不扣课':'课程结束后扣 1 节'}))
-    if(course.initialUsed>0)rows.push({group:courseGroup(course),category:courseType(course),name:course.name,status:'进行中',...counts,date:`${course.startDate} 前`,start:'',end:'',type:'历史已上',leave:'',change:`-${course.initialUsed}`,note:'由“此前已上课时”填写'})
+    summary.records.slice().reverse().forEach(record=>rows.push({group:courseGroup(course),category:courseType(course),name:course.name,status:'进行中',...counts,date:record.date,start:course.startTime,end:course.endTime,type:record.skipped?'请假':'已上',leave:record.skipped?leaveTime(course,record.date):'',change:record.skipped?0:-1,note:record.skipped?'请假，不扣课':'课程结束后扣 1 节'}))
+    if(course.initialUsed>0)rows.push({group:courseGroup(course),category:courseType(course),name:course.name,status:'进行中',...counts,date:`${course.startDate} 前`,start:'',end:'',type:'历史已上',leave:'',change:-course.initialUsed,note:'由“此前已上课时”填写'})
   })
-  rows.sort((a,b)=>{const order=`${a.group}|${a.category}|${a.name}`.localeCompare(`${b.group}|${b.category}|${b.name}`,'zh-CN');return order||b.date.localeCompare(a.date)})
-  const body=rows.map(row=>`<tr><td>${cell(row.group)}</td><td>${cell(row.category)}</td><td>${cell(row.name)}</td><td>${cell(row.status)}</td><td>${cell(row.total)}</td><td>${cell(row.used)}</td><td>${cell(row.remaining)}</td><td>${cell(row.date)}</td><td>${cell(row.start)}</td><td>${cell(row.end)}</td><td>${cell(row.type)}</td><td>${cell(row.leave)}</td><td>${cell(row.change)}</td><td>${cell(row.note)}</td></tr>`).join('')||'<tr><td colspan="14">暂无已结束的课程记录</td></tr>'
-  const html=`<!doctype html><html><head><meta charset="utf-8"><style>table{border-collapse:collapse;font-family:Microsoft YaHei,Arial}th,td{border:1px solid #9fbad0;padding:8px;white-space:nowrap}th{background:#dff2ff;color:#16436b}</style></head><body><h2>兴趣课时记录</h2><p>导出时间：${cell(generatedAt.toLocaleString('zh-CN'))}</p><table><tr><th>课程大类</th><th>课程分类</th><th>课程名称</th><th>课程状态</th><th>总课时</th><th>已上课时</th><th>剩余课时</th><th>上课日期</th><th>上课时间</th><th>下课时间</th><th>记录类型</th><th>请假登记时间</th><th>课时变化</th><th>说明</th></tr>${body}</table></body></html>`
-  const blob=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'})
-  const href=URL.createObjectURL(blob),link=document.createElement('a')
-  link.href=href;link.download=`兴趣课时记录_${dateKey(generatedAt)}.xls`;document.body.append(link);link.click();link.remove()
-  setTimeout(()=>URL.revokeObjectURL(href),1000);notify('Excel 表格已导出')
+  rows.sort((a,b)=>{const order=`${a.group}|${a.category}|${a.name}`.localeCompare(`${b.group}|${b.category}|${b.name}`,'zh-CN');return order||String(b.date).localeCompare(String(a.date))})
+  const header=["课程大类","课程分类","课程名称","课程状态","总课时","已上课时","剩余课时","上课日期","上课时间","下课时间","记录类型","请假登记时间","课时变化","说明"]
+  const data=rows.map(row=>[row.group,row.category,row.name,row.status,row.total,row.used,row.remaining,row.date,row.start,row.end,row.type,row.leave,row.change,row.note])
+  const worksheet=XLSX.utils.aoa_to_sheet([header,...data])
+  worksheet['!cols']=[{wch:12},{wch:14},{wch:16},{wch:11},{wch:10},{wch:12},{wch:12},{wch:15},{wch:12},{wch:12},{wch:12},{wch:22},{wch:10},{wch:28}]
+  worksheet['!autofilter']={ref:`A1:N${Math.max(1,data.length+1)}`}
+  const overview=XLSX.utils.aoa_to_sheet([['兴趣课时记录'],['导出时间',generatedAt.toLocaleString('zh-CN')],[],['说明','请假记录不扣课；已上记录扣 1 节。']])
+  overview['!cols']=[{wch:16},{wch:40}]
+  const workbook=XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook,overview,'导出说明')
+  XLSX.utils.book_append_sheet(workbook,worksheet,'上课记录')
+  XLSX.writeFile(workbook,`兴趣课时记录_${dateKey(generatedAt)}.xlsx`,{compression:true})
+  notify('标准 Excel 表格已导出')
 }
 const exportButton=document.createElement('button')
 exportButton.type='button';exportButton.className='export-records';exportButton.textContent='导出 Excel'

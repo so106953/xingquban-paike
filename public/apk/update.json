@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "versionName": "1.1.6",
-  "apkUrl": "https://website-delta-seven-19.vercel.app/apk/interest-class-v1.1.6.apk",
-  "notes": "Excel 标题和文件名新增孩子姓名；首页孩子档案换成卡通样式。"
+  "versionCode": 9,
+  "versionName": "1.1.7",
+  "apkUrl": "https://website-delta-seven-19.vercel.app/apk/interest-class-v1.1.7.apk",
+  "notes": "自定义课程图片支持自由拖动、缩放和裁剪；首页版本号同步为 1.1.7。"
 }

@@ -1,0 +1,5 @@
+.vercel
+.site-package/
+vercel-dist/
+*.tar.gz
+vercel-*.log

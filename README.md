@@ -1,9 +1,18 @@
-# 兴趣课时本网站预览
+# 兴趣课时本
 
-上课记录会保存在当前浏览器中；其中的请假记录不会扣除课时，也会一起保留。点击页面顶部的“导出记录”可下载 CSV 文件，用 Excel 打开即可查看课程设置、已上课和请假明细。
+这是项目总入口。网页端、Android App 源码和最新版下载地址都从这里进入。
 
-点击“添加兴趣班”可以新增任意课程。每门课程可独立设置名称、总课时、开始日前已上课时、统计开始日期、每周上课日和起止时间。
+| 内容 | 地址 |
+| --- | --- |
+| 在线网页版 | https://website-delta-seven-19.vercel.app |
+| 网页端源码与发布文件 | https://github.com/so106953/xingquban-paike |
+| Android App 源码 | https://github.com/so106953/xingqu-class-android |
+| 最新 Android 安装包（v1.1.7） | https://website-delta-seven-19.vercel.app/apk/interest-class-v1.1.7.apk |
 
-图片会根据课程名称自动匹配。当前内置篮球、英语、羽毛球、乒乓球、足球、网球、游泳、绘画、钢琴、吉他、小提琴、舞蹈、武术、编程、棋类、数学、声乐、阅读、轮滑、书法和通用课程图，也可手动选择或上传不超过 1 MB 的 PNG/JPG/WebP 图片。上传图片和课程数据仅保存在当前浏览器。
+## 更新规则
 
-联网收集的通用兴趣图来自 Microsoft Fluent Emoji，项目采用 MIT 许可；具体来源保存在 `assets/courses/SOURCES.json`，许可文本保存在 `assets/courses/LICENSE.txt`。
+- 网页端完成提交后，会自动推送到本仓库并部署到 Vercel。
+- Android App 完成提交后，会自动推送到 Android 源码仓库。
+- 发布新版 App 时，会同步更新版本号、安装包和在线更新信息。
+
+当前版本：**1.1.7**。
